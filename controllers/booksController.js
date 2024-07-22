@@ -1,6 +1,19 @@
 // controllers/booksController.js
 const booksService = require("../services/booksService");
+const { validationResult } = require("express-validator");
 const { AppError } = require("../middleware/errorMiddleware");
+const {
+  createBookValidators,
+  updateBookValidators,
+} = require("../validators/bookValidators");
+
+const checkValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return next(new AppError("Validation error", 400, errors.array()));
+  }
+  next();
+};
 
 // Get all books
 const getBooks = async (req, res, next) => {
@@ -106,34 +119,42 @@ const getBookByISBN = async (req, res, next) => {
 };
 
 // Create a new book
-const createBook = async (req, res, next) => {
-  try {
-    const newBook = await booksService.createBook(req.body);
-    res.status(201).json({
-      status: "success",
-      data: { book: newBook },
-    });
-  } catch (err) {
-    next(new AppError("Error creating book", 500));
-  }
-};
+const createBook = [
+  ...createBookValidators,
+  checkValidationErrors,
+  async (req, res, next) => {
+    try {
+      const newBook = await booksService.createBook(req.body);
+      res.status(201).json({
+        status: "success",
+        data: { book: newBook },
+      });
+    } catch (err) {
+      next(new AppError("Error creating book", 500));
+    }
+  },
+];
 
 // Update a book
-const updateBook = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const updatedBook = await booksService.updateBook(id, req.body);
-    if (!updatedBook) {
-      return next(new AppError("Book not found", 404));
+const updateBook = [
+  ...updateBookValidators,
+  checkValidationErrors,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const updatedBook = await booksService.updateBook(id, req.body);
+      if (!updatedBook) {
+        return next(new AppError("Book not found", 404));
+      }
+      res.status(200).json({
+        status: "success",
+        data: { book: updatedBook },
+      });
+    } catch (err) {
+      next(new AppError("Error updating book", 500));
     }
-    res.status(200).json({
-      status: "success",
-      data: { book: updatedBook },
-    });
-  } catch (err) {
-    next(new AppError("Error updating book", 500));
-  }
-};
+  },
+];
 
 // Delete a book
 const deleteBook = async (req, res, next) => {
