@@ -4,6 +4,7 @@ const app = express();
 const bodyParser = require("body-parser");
 const port = process.env.API_PORT || 4242;
 const booksRouter = require("./routes/books");
+const healthCheckRouter = require("./routes/healthCheck");
 
 app.use(express.json());
 
@@ -12,6 +13,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/books", booksRouter);
+app.use("/health", healthCheckRouter);
 
 // Use the error handling middleware
 app.use(errorHandler);
