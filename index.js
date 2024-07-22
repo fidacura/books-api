@@ -13,4 +13,7 @@ app.get("/", (req, res) => {
 
 app.use("/books", booksRouter);
 
+// Use the error handling middleware
+app.use(errorHandler);
+
 app.listen(port, () => console.log(`Server running on port: ${port}`));
