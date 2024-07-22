@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const port = process.env.API_PORT || 4242;
 const booksRouter = require("./routes/books");
 const healthCheckRouter = require("./routes/healthCheck");
+const { errorHandler } = require("./middleware/errorMiddleware");
 
 app.use(express.json());
 

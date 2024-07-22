@@ -13,23 +13,27 @@ const getBooks = async () => {
 
 const getBooksByAuthor = async (author) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM books WHERE author = $1", [
-      author,
-    ]);
+    const { rows } = await pool.query(
+      "SELECT * FROM books WHERE author ILIKE $1",
+      [`%${author}%`]
+    );
     return rows;
   } catch (err) {
-    throw new AppError("Error fetching books by author", 500);
+    console.error("Database error in getBooksByAuthor:", err); // Add this line for debugging
+    throw new AppError(`Error fetching books by author: ${err.message}`, 500);
   }
 };
 
 const getBooksByGenre = async (genre) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM books WHERE genre = $1", [
-      genre,
-    ]);
+    const { rows } = await pool.query(
+      "SELECT * FROM books WHERE genre ILIKE $1",
+      [`%${genre}%`]
+    );
     return rows;
   } catch (err) {
-    throw new AppError("Error fetching books by genre", 500);
+    console.error("Database error in getBooksByGenre:", err); // Add this line for debugging
+    throw new AppError(`Error fetching books by genre: ${err.message}`, 500);
   }
 };
 
@@ -90,6 +94,8 @@ const getBookByISBN = async (isbn) => {
 const createBook = async (book) => {
   const {
     title,
+    author,
+    genre,
     isbn,
     pages,
     publisher,
@@ -100,7 +106,10 @@ const createBook = async (book) => {
     edition,
   } = book;
 
+  console.log("Creating book with data:", book); // Add this line
+
   if (!title || !pages || !publisher || !published || !read_state) {
+    console.log("Missing required fields"); // Add this line
     throw new AppError(
       "Missing mandatory fields: title, pages, publisher, published, and read_state are required.",
       400
@@ -109,9 +118,11 @@ const createBook = async (book) => {
 
   try {
     const { rows } = await pool.query(
-      "INSERT INTO books (title, isbn, pages, publisher, published, read_state, opening_line, language, edition) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
+      "INSERT INTO books (title, author, genre, isbn, pages, publisher, published, read_state, opening_line, language, edition) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
       [
         title,
+        author,
+        genre,
         isbn,
         pages,
         publisher,
@@ -124,8 +135,8 @@ const createBook = async (book) => {
     );
     return rows[0];
   } catch (err) {
+    console.error("Database error in createBook:", err); // Add this line
     if (err.code === "23505") {
-      // Unique violation
       throw new AppError("A book with this ISBN already exists", 409);
     }
     throw new AppError("Error creating book", 500);

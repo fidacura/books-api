@@ -10,7 +10,12 @@ const {
 const checkValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return next(new AppError("Validation error", 400, errors.array()));
+    console.log("Validation errors:", errors.array()); // Add this line
+    return res.status(400).json({
+      status: "fail",
+      message: "Validation error",
+      errors: errors.array(),
+    });
   }
   next();
 };
@@ -32,13 +37,15 @@ const getBooks = async (req, res, next) => {
 const getBooksByAuthor = async (req, res, next) => {
   try {
     const { author } = req.params;
+    console.log("Fetching books for author:", author); // Add this line for debugging
     const booksByAuthor = await booksService.getBooksByAuthor(author);
     res.status(200).json({
       status: "success",
       data: { books: booksByAuthor },
     });
   } catch (err) {
-    next(new AppError("Error fetching books by author", 500));
+    console.error("Error in getBooksByAuthor:", err); // Add this line for debugging
+    next(new AppError(`Error fetching books by author: ${err.message}`, 500));
   }
 };
 
@@ -46,13 +53,15 @@ const getBooksByAuthor = async (req, res, next) => {
 const getBooksByGenre = async (req, res, next) => {
   try {
     const { genre } = req.params;
+    console.log("Fetching books for genre:", genre); // Add this line for debugging
     const booksByGenre = await booksService.getBooksByGenre(genre);
     res.status(200).json({
       status: "success",
       data: { books: booksByGenre },
     });
   } catch (err) {
-    next(new AppError("Error fetching books by genre", 500));
+    console.error("Error in getBooksByGenre:", err); // Add this line for debugging
+    next(new AppError(`Error fetching books by genre: ${err.message}`, 500));
   }
 };
 
@@ -127,14 +136,15 @@ const createBook = [
   checkValidationErrors,
   async (req, res, next) => {
     try {
+      console.log("Received book data:", req.body); // Add this line
       const newBook = await booksService.createBook(req.body);
       res.status(201).json({
         status: "success",
         data: { book: newBook },
       });
     } catch (err) {
+      console.error("Error in createBook:", err); // Add this line
       if (err.code === "23505") {
-        // Unique violation in PostgreSQL
         return next(new AppError("A book with this ISBN already exists", 409));
       }
       if (err.name === "ValidationError") {
