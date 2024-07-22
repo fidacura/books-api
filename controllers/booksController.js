@@ -97,6 +97,9 @@ const getBookById = async (req, res, next) => {
       data: { book },
     });
   } catch (err) {
+    if (err.name === "DatabaseError") {
+      return next(new AppError("Database error occurred", 500));
+    }
     next(new AppError("Error fetching book by ID", 500));
   }
 };
@@ -130,6 +133,13 @@ const createBook = [
         data: { book: newBook },
       });
     } catch (err) {
+      if (err.code === "23505") {
+        // Unique violation in PostgreSQL
+        return next(new AppError("A book with this ISBN already exists", 409));
+      }
+      if (err.name === "ValidationError") {
+        return next(new AppError(err.message, 422));
+      }
       next(new AppError("Error creating book", 500));
     }
   },
@@ -151,6 +161,13 @@ const updateBook = [
         data: { book: updatedBook },
       });
     } catch (err) {
+      if (err.name === "ValidationError") {
+        return next(new AppError(err.message, 422));
+      }
+      if (err.code === "23505") {
+        // Unique violation in PostgreSQL
+        return next(new AppError("A book with this ISBN already exists", 409));
+      }
       next(new AppError("Error updating book", 500));
     }
   },

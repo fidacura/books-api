@@ -1,51 +1,90 @@
+// services/bookService.js
 const pool = require("../models/dbBooks");
+const { AppError } = require("../middleware/errorMiddleware");
 
 const getBooks = async () => {
-  const { rows } = await pool.query("SELECT * FROM books");
-  return rows;
+  try {
+    const { rows } = await pool.query("SELECT * FROM books");
+    return rows;
+  } catch (err) {
+    throw new AppError("Error fetching books", 500);
+  }
 };
 
 const getBooksByAuthor = async (author) => {
-  const { rows } = await pool.query("SELECT * FROM books WHERE author = $1", [
-    author,
-  ]);
-  return rows;
+  try {
+    const { rows } = await pool.query("SELECT * FROM books WHERE author = $1", [
+      author,
+    ]);
+    return rows;
+  } catch (err) {
+    throw new AppError("Error fetching books by author", 500);
+  }
 };
 
 const getBooksByGenre = async (genre) => {
-  const { rows } = await pool.query("SELECT * FROM books WHERE genre = $1", [
-    genre,
-  ]);
-  return rows;
+  try {
+    const { rows } = await pool.query("SELECT * FROM books WHERE genre = $1", [
+      genre,
+    ]);
+    return rows;
+  } catch (err) {
+    throw new AppError("Error fetching books by genre", 500);
+  }
 };
 
 const getBooksByPublisher = async (publisher) => {
-  const { rows } = await pool.query(
-    "SELECT * FROM books WHERE publisher = $1",
-    [publisher]
-  );
-  return rows;
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM books WHERE publisher = $1",
+      [publisher]
+    );
+    return rows;
+  } catch (err) {
+    throw new AppError("Error fetching books by publisher", 500);
+  }
 };
 
 const getBooksByTitle = async (title) => {
-  const { rows } = await pool.query("SELECT * FROM books WHERE title = $1", [
-    title,
-  ]);
-  return rows;
+  try {
+    const { rows } = await pool.query("SELECT * FROM books WHERE title = $1", [
+      title,
+    ]);
+    return rows;
+  } catch (err) {
+    throw new AppError("Error fetching books by title", 500);
+  }
 };
 
 const getBookById = async (id) => {
-  const { rows } = await pool.query("SELECT * FROM books WHERE book_id = $1", [
-    id,
-  ]);
-  return rows[0];
+  try {
+    const { rows } = await pool.query(
+      "SELECT * FROM books WHERE book_id = $1",
+      [id]
+    );
+    if (rows.length === 0) {
+      throw new AppError("Book not found", 404);
+    }
+    return rows[0];
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Error fetching book by ID", 500);
+  }
 };
 
 const getBookByISBN = async (isbn) => {
-  const { rows } = await pool.query("SELECT * FROM books WHERE isbn = $1", [
-    isbn,
-  ]);
-  return rows[0];
+  try {
+    const { rows } = await pool.query("SELECT * FROM books WHERE isbn = $1", [
+      isbn,
+    ]);
+    if (rows.length === 0) {
+      throw new AppError("Book not found", 404);
+    }
+    return rows[0];
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Error fetching book by ISBN", 500);
+  }
 };
 
 const createBook = async (book) => {
@@ -61,28 +100,36 @@ const createBook = async (book) => {
     edition,
   } = book;
 
-  // Check for mandatory fields
   if (!title || !pages || !publisher || !published || !read_state) {
-    throw new Error(
-      "Missing mandatory fields: title, pages, publisher, published, and read_state are required."
+    throw new AppError(
+      "Missing mandatory fields: title, pages, publisher, published, and read_state are required.",
+      400
     );
   }
 
-  const { rows } = await pool.query(
-    "INSERT INTO books (title, isbn, pages, publisher, published, read_state, opening_line, language, edition) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
-    [
-      title,
-      isbn,
-      pages,
-      publisher,
-      published,
-      read_state,
-      opening_line,
-      language,
-      edition,
-    ]
-  );
-  return rows[0];
+  try {
+    const { rows } = await pool.query(
+      "INSERT INTO books (title, isbn, pages, publisher, published, read_state, opening_line, language, edition) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *",
+      [
+        title,
+        isbn,
+        pages,
+        publisher,
+        published,
+        read_state,
+        opening_line,
+        language,
+        edition,
+      ]
+    );
+    return rows[0];
+  } catch (err) {
+    if (err.code === "23505") {
+      // Unique violation
+      throw new AppError("A book with this ISBN already exists", 409);
+    }
+    throw new AppError("Error creating book", 500);
+  }
 };
 
 const updateBook = async (id, book) => {
@@ -98,33 +145,57 @@ const updateBook = async (id, book) => {
     edition,
   } = book;
 
-  // Check for mandatory fields
   if (!title || !pages || !publisher || !published || !read_state) {
-    throw new Error(
-      "Missing mandatory fields: title, pages, publisher, published, and read_state are required."
+    throw new AppError(
+      "Missing mandatory fields: title, pages, publisher, published, and read_state are required.",
+      400
     );
   }
 
-  const { rows } = await pool.query(
-    "UPDATE books SET title = $1, isbn = $2, pages = $3, publisher = $4, published = $5, read_state = $6, opening_line = $7, language = $8, edition = $9 WHERE book_id = $10 RETURNING *",
-    [
-      title,
-      isbn,
-      pages,
-      publisher,
-      published,
-      read_state,
-      opening_line,
-      language,
-      edition,
-      id,
-    ]
-  );
-  return rows[0];
+  try {
+    const { rows } = await pool.query(
+      "UPDATE books SET title = $1, isbn = $2, pages = $3, publisher = $4, published = $5, read_state = $6, opening_line = $7, language = $8, edition = $9 WHERE book_id = $10 RETURNING *",
+      [
+        title,
+        isbn,
+        pages,
+        publisher,
+        published,
+        read_state,
+        opening_line,
+        language,
+        edition,
+        id,
+      ]
+    );
+    if (rows.length === 0) {
+      throw new AppError("Book not found", 404);
+    }
+    return rows[0];
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    if (err.code === "23505") {
+      // Unique violation
+      throw new AppError("A book with this ISBN already exists", 409);
+    }
+    throw new AppError("Error updating book", 500);
+  }
 };
 
 const deleteBook = async (id) => {
-  await pool.query("DELETE FROM books WHERE book_id = $1", [id]);
+  try {
+    const { rowCount } = await pool.query(
+      "DELETE FROM books WHERE book_id = $1",
+      [id]
+    );
+    if (rowCount === 0) {
+      throw new AppError("Book not found", 404);
+    }
+    return true;
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw new AppError("Error deleting book", 500);
+  }
 };
 
 module.exports = {
