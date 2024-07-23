@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    ports:
+      - "${API_PORT}:4242"
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - API_PORT=${API_PORT}
+      - POSTGRES_BOOKS_HOST=${POSTGRES_BOOKS_HOST}
+      - POSTGRES_BOOKS_DB=${POSTGRES_BOOKS_DB}
+      - POSTGRES_BOOKS_USER=${POSTGRES_BOOKS_USER}
+      - POSTGRES_BOOKS_PASSWORD=${POSTGRES_BOOKS_PASSWORD}
+    depends_on:
+      - fidacura-books-db
+
+  fidacura-books-db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ${POSTGRES_BOOKS_DB}
+      POSTGRES_USER: ${POSTGRES_BOOKS_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_BOOKS_PASSWORD}
+    volumes:
+      - fidacura-books-db-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  fidacura-books-db-data:
