@@ -1,4 +1,3 @@
-// index.js
 const express = require("express");
 const helmet = require("helmet");
 const app = express();
@@ -9,7 +8,6 @@ const healthCheckRouter = require("./routes/healthCheck");
 const { errorHandler } = require("./middleware/errorMiddleware");
 
 app.use(express.json());
-
 app.use(helmet());
 
 app.get("/", (req, res) => {
@@ -19,7 +17,12 @@ app.get("/", (req, res) => {
 app.use("/books", booksRouter);
 app.use("/health", healthCheckRouter);
 
-// Use the error handling middleware
+// use the error handler middleware
 app.use(errorHandler);
 
-app.listen(port, () => console.log(`Server running on port: ${port}`));
+// only start the server if we're not in a test environment
+if (process.env.NODE_ENV !== "test") {
+  app.listen(port, () => console.log(`Server running on port: ${port}`));
+}
+
+module.exports = app;
