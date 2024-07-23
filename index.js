@@ -1,5 +1,6 @@
 // index.js
 const express = require("express");
+const helmet = require("helmet");
 const app = express();
 const bodyParser = require("body-parser");
 const port = process.env.API_PORT || 4242;
@@ -8,6 +9,8 @@ const healthCheckRouter = require("./routes/healthCheck");
 const { errorHandler } = require("./middleware/errorMiddleware");
 
 app.use(express.json());
+
+app.use(helmet());
 
 app.get("/", (req, res) => {
   res.sendStatus(200);
