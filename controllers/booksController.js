@@ -10,7 +10,7 @@ const {
 const checkValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.log("Validation errors:", errors.array()); // Add this line
+    console.log("Validation errors:", errors.array());
     return res.status(400).json({
       status: "fail",
       message: "Validation error",
@@ -37,14 +37,14 @@ const getBooks = async (req, res, next) => {
 const getBooksByAuthor = async (req, res, next) => {
   try {
     const { author } = req.params;
-    console.log("Fetching books for author:", author); // Add this line for debugging
+    console.log("Fetching books for author:", author);
     const booksByAuthor = await booksService.getBooksByAuthor(author);
     res.status(200).json({
       status: "success",
       data: { books: booksByAuthor },
     });
   } catch (err) {
-    console.error("Error in getBooksByAuthor:", err); // Add this line for debugging
+    console.error("Error in getBooksByAuthor:", err);
     next(new AppError(`Error fetching books by author: ${err.message}`, 500));
   }
 };
@@ -67,14 +67,14 @@ const getBooksByCategory = async (req, res, next) => {
 const getBooksByGenre = async (req, res, next) => {
   try {
     const { genre } = req.params;
-    console.log("Fetching books for genre:", genre); // Add this line for debugging
+    console.log("Fetching books for genre:", genre);
     const booksByGenre = await booksService.getBooksByGenre(genre);
     res.status(200).json({
       status: "success",
       data: { books: booksByGenre },
     });
   } catch (err) {
-    console.error("Error in getBooksByGenre:", err); // Add this line for debugging
+    console.error("Error in getBooksByGenre:", err);
     next(new AppError(`Error fetching books by genre: ${err.message}`, 500));
   }
 };

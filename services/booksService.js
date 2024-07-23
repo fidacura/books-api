@@ -1,6 +1,16 @@
 // services/booksService.js
 const pool = require("../models/dbBooks");
 const { AppError } = require("../middleware/errorMiddleware");
+const xss = require("xss");
+const sanitizeHtml = require("sanitize-html");
+
+const sanitizeString = (value) => {
+  if (typeof value !== "string") return value;
+  return sanitizeHtml(xss(value.trim()), {
+    allowedTags: [],
+    allowedAttributes: {},
+  });
+};
 
 // Get all books
 const getBooks = async () => {
@@ -15,12 +25,13 @@ const getBooks = async () => {
 // Get books by author
 const getBooksByAuthor = async (author) => {
   try {
+    const sanitizedAuthor = sanitizeString(author);
     const { rows } = await pool.query(
       `SELECT DISTINCT b.* FROM books b
        JOIN book_authors ba ON b.book_id = ba.book_id
        JOIN authors a ON ba.author_id = a.author_id
        WHERE a.name ILIKE $1`,
-      [`%${author}%`]
+      [`%${sanitizedAuthor}%`]
     );
     return rows;
   } catch (err) {
@@ -32,9 +43,10 @@ const getBooksByAuthor = async (author) => {
 // Get books by category
 const getBooksByCategory = async (category) => {
   try {
+    const sanitizedCategory = sanitizeString(category);
     const { rows } = await pool.query(
       "SELECT * FROM books WHERE $1 = ANY(categories)",
-      [category]
+      [sanitizedCategory]
     );
     return rows;
   } catch (err) {
@@ -45,12 +57,13 @@ const getBooksByCategory = async (category) => {
 // Get books by genre
 const getBooksByGenre = async (genre) => {
   try {
+    const sanitizedGenre = sanitizeString(genre);
     const { rows } = await pool.query(
       `SELECT DISTINCT b.* FROM books b
        JOIN book_genres bg ON b.book_id = bg.book_id
        JOIN genres g ON bg.genre_id = g.genre_id
        WHERE g.name ILIKE $1`,
-      [`%${genre}%`]
+      [`%${sanitizedGenre}%`]
     );
     return rows;
   } catch (err) {
@@ -62,9 +75,10 @@ const getBooksByGenre = async (genre) => {
 // Get books by publisher
 const getBooksByPublisher = async (publisher) => {
   try {
+    const sanitizedPublisher = sanitizeString(publisher);
     const { rows } = await pool.query(
       "SELECT * FROM books WHERE publisher ILIKE $1",
-      [`%${publisher}%`]
+      [`%${sanitizedPublisher}%`]
     );
     return rows;
   } catch (err) {
@@ -75,9 +89,10 @@ const getBooksByPublisher = async (publisher) => {
 // Get books by title
 const getBooksByTitle = async (title) => {
   try {
+    const sanitizedTitle = sanitizeString(title);
     const { rows } = await pool.query(
       "SELECT * FROM books WHERE title ILIKE $1",
-      [`%${title}%`]
+      [`%${sanitizedTitle}%`]
     );
     return rows;
   } catch (err) {
@@ -114,8 +129,9 @@ const getBookById = async (id) => {
 // Get book by ISBN
 const getBookByISBN = async (isbn) => {
   try {
+    const sanitizedISBN = sanitizeString(isbn);
     const { rows } = await pool.query("SELECT * FROM books WHERE isbn = $1", [
-      isbn,
+      sanitizedISBN,
     ]);
     if (rows.length === 0) {
       throw new AppError("Book not found", 404);
@@ -136,28 +152,29 @@ const createBook = async (book) => {
       `INSERT INTO books (title, isbn, pages, publisher, publication_date, read_state, language, format)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
       [
-        book.title,
-        book.isbn,
+        sanitizeString(book.title),
+        sanitizeString(book.isbn),
         book.pages,
-        book.publisher,
+        sanitizeString(book.publisher),
         book.publication_date,
-        book.read_state,
-        book.language,
-        book.format,
+        sanitizeString(book.read_state),
+        sanitizeString(book.language),
+        sanitizeString(book.format),
       ]
     );
     const newBook = rows[0];
 
     for (let authorName of book.author) {
+      let sanitizedAuthorName = sanitizeString(authorName);
       let authorResult = await client.query(
         "SELECT author_id FROM authors WHERE name = $1",
-        [authorName]
+        [sanitizedAuthorName]
       );
       let authorId;
       if (authorResult.rows.length === 0) {
         const newAuthorResult = await client.query(
           "INSERT INTO authors (name) VALUES ($1) RETURNING author_id",
-          [authorName]
+          [sanitizedAuthorName]
         );
         authorId = newAuthorResult.rows[0].author_id;
       } else {
@@ -194,7 +211,9 @@ const updateBook = async (id, book) => {
     for (const [key, value] of Object.entries(book)) {
       if (value !== undefined && key !== "author") {
         updateFields.push(`${key} = $${parameterIndex}`);
-        updateValues.push(value);
+        updateValues.push(
+          typeof value === "string" ? sanitizeString(value) : value
+        );
         parameterIndex++;
       }
     }
@@ -237,15 +256,16 @@ const updateBook = async (id, book) => {
       await client.query("DELETE FROM book_authors WHERE book_id = $1", [id]);
 
       for (let authorName of book.author) {
+        let sanitizedAuthorName = sanitizeString(authorName);
         let authorResult = await client.query(
           "SELECT author_id FROM authors WHERE name = $1",
-          [authorName]
+          [sanitizedAuthorName]
         );
         let authorId;
         if (authorResult.rows.length === 0) {
           const newAuthorResult = await client.query(
             "INSERT INTO authors (name) VALUES ($1) RETURNING author_id",
-            [authorName]
+            [sanitizedAuthorName]
           );
           authorId = newAuthorResult.rows[0].author_id;
         } else {
