@@ -2,6 +2,7 @@
 const pool = require("../models/dbBooks");
 const { AppError } = require("../middleware/errorMiddleware");
 
+// Get all books
 const getBooks = async () => {
   try {
     const { rows } = await pool.query("SELECT * FROM books");
@@ -11,6 +12,7 @@ const getBooks = async () => {
   }
 };
 
+// Get books by author
 const getBooksByAuthor = async (author) => {
   try {
     const { rows } = await pool.query(
@@ -27,6 +29,7 @@ const getBooksByAuthor = async (author) => {
   }
 };
 
+// Get books by category
 const getBooksByCategory = async (category) => {
   try {
     const { rows } = await pool.query(
@@ -39,6 +42,7 @@ const getBooksByCategory = async (category) => {
   }
 };
 
+// Get books by genre
 const getBooksByGenre = async (genre) => {
   try {
     const { rows } = await pool.query(
@@ -55,6 +59,7 @@ const getBooksByGenre = async (genre) => {
   }
 };
 
+// Get books by publisher
 const getBooksByPublisher = async (publisher) => {
   try {
     const { rows } = await pool.query(
@@ -67,6 +72,7 @@ const getBooksByPublisher = async (publisher) => {
   }
 };
 
+// Get books by title
 const getBooksByTitle = async (title) => {
   try {
     const { rows } = await pool.query(
@@ -79,6 +85,7 @@ const getBooksByTitle = async (title) => {
   }
 };
 
+// Get book by ID
 const getBookById = async (id) => {
   try {
     const { rows } = await pool.query(
@@ -104,6 +111,7 @@ const getBookById = async (id) => {
   }
 };
 
+// Get book by ISBN
 const getBookByISBN = async (isbn) => {
   try {
     const { rows } = await pool.query("SELECT * FROM books WHERE isbn = $1", [
@@ -119,6 +127,7 @@ const getBookByISBN = async (isbn) => {
   }
 };
 
+// Create a new book
 const createBook = async (book) => {
   const client = await pool.connect();
   try {
@@ -170,6 +179,7 @@ const createBook = async (book) => {
   }
 };
 
+// Update a book
 const updateBook = async (id, book) => {
   const client = await pool.connect();
   try {
@@ -279,6 +289,7 @@ const updateBook = async (id, book) => {
   }
 };
 
+// Delete a book
 const deleteBook = async (id) => {
   const client = await pool.connect();
   try {
