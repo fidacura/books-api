@@ -49,6 +49,20 @@ const getBooksByAuthor = async (req, res, next) => {
   }
 };
 
+// Get books by category
+const getBooksByCategory = async (req, res, next) => {
+  try {
+    const { category } = req.params;
+    const booksByCategory = await booksService.getBooksByCategory(category);
+    res.status(200).json({
+      status: "success",
+      data: { books: booksByCategory },
+    });
+  } catch (err) {
+    next(new AppError(`Error fetching books by category: ${err.message}`, 500));
+  }
+};
+
 // Get books by genre
 const getBooksByGenre = async (req, res, next) => {
   try {
@@ -136,14 +150,14 @@ const createBook = [
   checkValidationErrors,
   async (req, res, next) => {
     try {
-      console.log("Received book data:", req.body); // Add this line
+      console.log("Received book data:", JSON.stringify(req.body, null, 2));
       const newBook = await booksService.createBook(req.body);
       res.status(201).json({
         status: "success",
         data: { book: newBook },
       });
     } catch (err) {
-      console.error("Error in createBook:", err); // Add this line
+      console.error("Error in createBook:", err);
       if (err.code === "23505") {
         return next(new AppError("A book with this ISBN already exists", 409));
       }
@@ -162,7 +176,10 @@ const updateBook = [
   async (req, res, next) => {
     try {
       const { id } = req.params;
+      console.log("Updating book with ID:", id);
+      console.log("Update data:", JSON.stringify(req.body, null, 2));
       const updatedBook = await booksService.updateBook(id, req.body);
+      console.log("Updated book:", JSON.stringify(updatedBook, null, 2));
       if (!updatedBook) {
         return next(new AppError("Book not found", 404));
       }
@@ -171,6 +188,7 @@ const updateBook = [
         data: { book: updatedBook },
       });
     } catch (err) {
+      console.error("Error in updateBook controller:", err);
       if (err.name === "ValidationError") {
         return next(new AppError(err.message, 422));
       }
@@ -178,7 +196,7 @@ const updateBook = [
         // Unique violation in PostgreSQL
         return next(new AppError("A book with this ISBN already exists", 409));
       }
-      next(new AppError("Error updating book", 500));
+      next(new AppError(`Error updating book: ${err.message}`, 500));
     }
   },
 ];
@@ -203,6 +221,7 @@ const deleteBook = async (req, res, next) => {
 module.exports = {
   getBooks,
   getBooksByAuthor,
+  getBooksByCategory,
   getBooksByGenre,
   getBooksByPublisher,
   getBooksByTitle,
