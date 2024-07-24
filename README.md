@@ -87,7 +87,7 @@ Response:
         "series_name": null,
         "series_number": null,
         "format": "Paperback",
-        "rating": 3.64,
+        "rating": 5.0,
         "authors": ["Geoff Dyer"],
         "genres": ["Contemporary Fiction"]
       }
