@@ -21,7 +21,7 @@ This API allows CRUD operations on a book collection. It's built with Node.js, E
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/books-api.git
+git clone https://github.com/fidacura/books-api.git
 cd books-api
 ```
 
